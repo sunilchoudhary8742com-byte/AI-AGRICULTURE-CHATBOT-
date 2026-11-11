@@ -1,0 +1,39 @@
+# Virtual Environment
+.venv/
+env/
+venv/
+ENV/
+
+# Secrets and Environment Variables
+.env
+*.env.local
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# SQLite Database files
+backend/database/*.db
+backend/database/*.sqlite
+backend/database/*.sqlite3
+*.db
+*.sqlite
+
+# Large Raw Image Datasets (Keep data/Crop_recommendation.csv)
+data/PlantVillage/
+
+# IDE and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and temporary files
+*.log
+tmp/
+temp/

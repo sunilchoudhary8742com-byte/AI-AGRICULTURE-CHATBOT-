@@ -1,0 +1,1366 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agriculture Assistant for Farmers</title>
+
+    <style>
+        :root {
+            --green-dark: #14532d;
+            --green: #22a447;
+            --green-light: #dcfce7;
+            --background: #f1f8f2;
+            --white: #ffffff;
+            --text: #183126;
+            --muted: #64748b;
+            --border: #dce8df;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #14532d, #22a447);
+            color: white;
+            padding: 30px 15px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: clamp(25px, 4vw, 38px);
+        }
+
+        nav {
+            background: white;
+            padding: 12px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        nav a {
+            color: var(--green-dark);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: auto;
+            padding: 22px 15px;
+        }
+
+        .section {
+            background: white;
+            padding: 22px;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            margin-bottom: 22px;
+            box-shadow: 0 3px 12px rgba(20,83,45,.05);
+        }
+
+        .section h2 {
+            color: var(--green-dark);
+            margin-top: 0;
+        }
+
+        .section-description { color: var(--muted); }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0,1fr));
+            gap: 15px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label { font-weight: bold; }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5d1;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        button {
+            background: var(--green);
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            margin-top: 16px;
+        }
+
+        button:hover { background: var(--green-dark); }
+
+        button:disabled {
+            opacity: .6;
+            cursor: wait;
+        }
+
+        .result {
+            display: none;
+            margin-top: 18px;
+            padding: 16px;
+            border-radius: 10px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            overflow-wrap: anywhere;
+        }
+
+        .result.show { display: block; }
+
+        .error {
+            background: #fff1f2;
+            border-color: #fecdd3;
+            color: #9f1239;
+        }
+
+        .auth-card, .weather-card, .forecast-card,
+        .advice-card, .history-item {
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #fbfefb;
+        }
+
+        .auth-card .field { margin-top: 10px; }
+
+        .weather-grid, .forecast-grid, .advice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit,minmax(190px,1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .weather-number, .temperature {
+            font-size: 23px;
+            font-weight: bold;
+            color: var(--green-dark);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 9px;
+            border-radius: 20px;
+            background: var(--green-light);
+            color: var(--green-dark);
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .preview {
+            max-width: 100%;
+            max-height: 280px;
+            display: none;
+            margin-top: 12px;
+            border-radius: 10px;
+        }
+
+        .alert {
+            padding: 14px;
+            margin: 12px 0;
+            border-radius: 10px;
+            background: #e0f2fe;
+        }
+
+        .history-item { margin: 12px 0; }
+
+        .history-item pre {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        footer {
+            text-align: center;
+            padding: 22px;
+            color: var(--muted);
+        }
+
+        @media(max-width:600px) {
+            .grid { grid-template-columns: 1fr; }
+            .section { padding: 16px; }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>🌱 AI Agriculture Assistant</h1>
+    <p>Smart Farming Support for Farmers</p>
+    <p>Crop Recommendations • Plant Disease Detection • Weather Advice</p>
+</header>
+
+<nav>
+    <a href="#account">Account</a>
+    <a href="#history">My History</a>
+    <a href="#crop">Crop Recommendation</a>
+    <a href="#fertilizer">Fertilizer</a>
+    <a href="#disease">Plant Disease</a>
+    <a href="#weather">Weather</a>
+    <a href="#farming-advice">Farming Advice</a>
+</nav>
+
+<main>
+
+    <!-- FARMER ACCOUNT -->
+    <section class="section" id="account">
+        <h2>👨‍🌾 Farmer Account</h2>
+
+        <div id="accountStatus" class="alert">
+            You are not logged in. Please log in to use crop prediction and history.
+        </div>
+
+        <div class="grid" id="authForms">
+
+            <form id="signupForm" class="auth-card">
+                <h3>📝 Create Account</h3>
+
+                <div class="field">
+                    <label for="signupName">Full Name</label>
+                    <input id="signupName" type="text" minlength="2"
+                           maxlength="100" required>
+                </div>
+
+                <div class="field">
+                    <label for="signupEmail">Email</label>
+                    <input id="signupEmail" type="email" required>
+                </div>
+
+                <div class="field">
+                    <label for="signupPassword">Password (minimum 8 characters)</label>
+                    <input id="signupPassword" type="password"
+                           minlength="8" maxlength="128" required>
+                </div>
+
+                <button type="submit">Create Account</button>
+                <div id="signupResult" class="result"></div>
+            </form>
+
+            <form id="loginForm" class="auth-card">
+                <h3>🔐 Farmer Login</h3>
+
+                <div class="field">
+                    <label for="loginEmail">Email</label>
+                    <input id="loginEmail" type="email" required>
+                </div>
+
+                <div class="field">
+                    <label for="loginPassword">Password</label>
+                    <input id="loginPassword" type="password" required>
+                </div>
+
+                <button type="submit">Login</button>
+                <div id="loginResult" class="result"></div>
+            </form>
+
+        </div>
+
+        <div id="loggedInControls" style="display:none;">
+            <p id="loggedInMessage"></p>
+            <button type="button" id="logoutButton">Logout</button>
+        </div>
+    </section>
+
+    <!-- PREDICTION HISTORY -->
+    <section class="section" id="history">
+        <h2>📚 My Crop Prediction History</h2>
+        <p class="section-description">
+            View crop recommendations saved to your farmer account.
+        </p>
+
+        <button type="button" id="historyButton">
+            Load My Prediction History
+        </button>
+
+        <div id="historyResult" class="result"></div>
+    </section>
+
+    <div style="text-align:center;margin:25px 0;">
+        <h2>Welcome, Farmer!</h2>
+        <p>Use AI tools and weather information to make informed farming decisions.</p>
+    </div>
+
+    <!-- CROP RECOMMENDATION -->
+    <section class="section" id="crop">
+        <h2>🌾 Crop Recommendation</h2>
+        <p class="section-description">
+            Enter soil and environmental values to get crop recommendations.
+        </p>
+
+        <!-- Crop form now uses a proper submit handler -->
+        <form id="cropForm">
+
+            <div class="grid">
+
+                <div class="field">
+                    <label for="nitrogen">Nitrogen (N)</label>
+                    <input id="nitrogen" type="number" min="0"
+                           max="300" step="any" required>
+                </div>
+
+                <div class="field">
+                    <label for="phosphorus">Phosphorus (P)</label>
+                    <input id="phosphorus" type="number" min="0"
+                           max="300" step="any" required>
+                </div>
+
+                <div class="field">
+                    <label for="potassium">Potassium (K)</label>
+                    <input id="potassium" type="number" min="0"
+                           max="300" step="any" required>
+                </div>
+
+                <div class="field">
+                    <label for="temperature">Temperature (°C)</label>
+                    <input id="temperature" type="number"
+                           step="any" required>
+                </div>
+
+                <div class="field">
+                    <label for="humidity">Humidity (%)</label>
+                    <input id="humidity" type="number" min="0"
+                           max="100" step="any" required>
+                </div>
+
+                <div class="field">
+                    <label for="ph">Soil pH</label>
+                    <input id="ph" type="number" min="0"
+                           max="14" step="any" required>
+                </div>
+
+                <div class="field">
+                    <label for="rainfall">Rainfall (mm)</label>
+                    <input id="rainfall" type="number" min="0"
+                           step="any" required>
+                </div>
+
+            </div>
+
+            <button type="submit" id="cropButton">
+                Get Crop Recommendations
+            </button>
+
+        </form>
+
+        <div id="cropResult" class="result"></div>
+    </section>
+
+    <!-- FERTILIZER -->
+    <section class="section" id="fertilizer">
+        <h2>🧪 Fertilizer Guidance</h2>
+
+        <p class="section-description">
+            Get fertilizer guidance using soil and crop inputs.
+        </p>
+
+        <div class="field">
+            <label for="fertilizerCrop">Crop Name</label>
+            <input id="fertilizerCrop" type="text"
+                   placeholder="Example: rice, maize, wheat">
+        </div>
+
+        <button type="button" id="fertilizerButton">
+            Get Fertilizer Guidance
+        </button>
+
+        <div id="fertilizerResult" class="result"></div>
+    </section>
+
+    <!-- PLANT DISEASE -->
+    <section class="section" id="disease">
+        <h2>🍃 Plant Disease Detection</h2>
+
+        <p class="section-description">
+            Upload a clear image of a plant leaf for AI-based disease prediction.
+        </p>
+
+        <form id="diseaseForm">
+            <div class="field">
+                <label for="plantImage">Choose Leaf Image</label>
+                <input id="plantImage" type="file"
+                       accept="image/*" required>
+            </div>
+
+            <img id="imagePreview" class="preview"
+                 alt="Selected plant leaf preview">
+
+            <button type="submit">Detect Plant Disease</button>
+        </form>
+
+        <div id="diseaseResult" class="result"></div>
+        <div id="diseaseCareResult" class="result"></div>
+    </section>
+
+    <!-- WEATHER -->
+    <section class="section" id="weather">
+        <h2>🌦️ Live Weather & Five-Day Forecast</h2>
+
+        <form id="weatherForm">
+            <div class="field">
+                <label for="city">City Name</label>
+                <input id="city" type="text"
+                       placeholder="Example: Jaipur" required>
+            </div>
+
+            <button type="submit">Get Weather & Forecast</button>
+        </form>
+
+        <p id="weatherStatus"></p>
+        <div id="currentWeather" class="weather-grid"></div>
+        <h3 id="forecastHeading"></h3>
+        <div id="forecast" class="forecast-grid"></div>
+    </section>
+
+    <!-- FARMING ADVICE -->
+    <section class="section" id="farming-advice">
+        <h2>🚜 Weather-Based Farming Advice</h2>
+
+        <p id="adviceSummary">
+            First load the weather forecast for your city.
+        </p>
+
+        <div id="farmingAdvice" class="advice-grid"></div>
+
+        <div class="alert">
+            <strong>Important:</strong>
+            These are general weather-based suggestions.
+            Actual farming decisions depend on crop type, soil,
+            growth stage and local conditions.
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    AI Agriculture Assistant for Farmers | Smart Farming Support
+</footer>
+
+<script>
+"use strict";
+
+// =====================================
+// BACKEND CONFIGURATION
+// =====================================
+
+const API_BASE = "http://127.0.0.1:8000";
+const TOKEN_KEY = "agriculture_access_token";
+
+let currentFarmer = null;
+
+
+// =====================================
+// COMMON FUNCTIONS
+// =====================================
+
+function getElement(id) {
+    return document.getElementById(id);
+}
+
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, function(char) {
+        return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        }[char];
+    });
+}
+
+function showResult(element, html, isError = false) {
+    element.innerHTML = html;
+    element.classList.add("show");
+    element.classList.toggle("error", isError);
+}
+
+function showLoading(element, message) {
+    showResult(element, escapeHTML(message));
+}
+
+function getAccessToken() {
+    return sessionStorage.getItem(TOKEN_KEY);
+}
+
+function getAuthHeaders() {
+    const token = getAccessToken();
+
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function fetchJSON(url, options = {}) {
+    let response;
+
+    try {
+        response = await fetch(url, options);
+    } catch (error) {
+        throw new Error(
+            "Backend se connection nahi ho raha. Check karo ki FastAPI server running hai."
+        );
+    }
+
+    let data;
+
+    try {
+        data = await response.json();
+    } catch (error) {
+        throw new Error("Backend se valid JSON response nahi mila.");
+    }
+
+    if (!response.ok) {
+        const detail = data.detail || data.message || "Request failed.";
+        throw new Error(
+            typeof detail === "string" ? detail : JSON.stringify(detail)
+        );
+    }
+
+    return data;
+}
+
+
+// =====================================
+// AUTHENTICATION UI
+// =====================================
+
+function updateAuthUI() {
+    const loggedIn = Boolean(getAccessToken() && currentFarmer);
+
+    getElement("authForms").style.display =
+        loggedIn ? "none" : "grid";
+
+    getElement("loggedInControls").style.display =
+        loggedIn ? "block" : "none";
+
+    if (loggedIn) {
+        getElement("accountStatus").textContent = "You are logged in.";
+
+        getElement("loggedInMessage").textContent =
+            `Welcome, ${currentFarmer.full_name} (${currentFarmer.email})`;
+    } else {
+        getElement("accountStatus").textContent =
+            "You are not logged in. Please log in to use crop prediction and history.";
+    }
+}
+
+async function loadCurrentFarmer() {
+    if (!getAccessToken()) {
+        currentFarmer = null;
+        updateAuthUI();
+        return;
+    }
+
+    try {
+        currentFarmer = await fetchJSON(
+            `${API_BASE}/me`,
+            { headers: getAuthHeaders() }
+        );
+    } catch (error) {
+        sessionStorage.removeItem(TOKEN_KEY);
+        currentFarmer = null;
+
+        showResult(
+            getElement("loginResult"),
+            "Session expired. Please log in again.",
+            true
+        );
+    }
+
+    updateAuthUI();
+}
+
+
+// =====================================
+// SIGNUP
+// =====================================
+
+getElement("signupForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const result = getElement("signupResult");
+    const button = this.querySelector("button");
+
+    button.disabled = true;
+    showLoading(result, "Creating your farmer account...");
+
+    try {
+        const payload = {
+            full_name: getElement("signupName").value.trim(),
+            email: getElement("signupEmail").value.trim(),
+            password: getElement("signupPassword").value
+        };
+
+        const data = await fetchJSON(`${API_BASE}/signup`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        showResult(
+            result,
+            `Account created successfully for ${escapeHTML(data.full_name)}. Now login.`
+        );
+
+        getElement("loginEmail").value = payload.email;
+        this.reset();
+
+    } catch (error) {
+        showResult(result, escapeHTML(error.message), true);
+    } finally {
+        button.disabled = false;
+    }
+});
+
+
+// =====================================
+// LOGIN
+// =====================================
+
+getElement("loginForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const result = getElement("loginResult");
+    const button = this.querySelector("button");
+
+    button.disabled = true;
+    showLoading(result, "Logging in...");
+
+    try {
+        const payload = {
+            email: getElement("loginEmail").value.trim(),
+            password: getElement("loginPassword").value
+        };
+
+        const data = await fetchJSON(`${API_BASE}/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        sessionStorage.setItem(TOKEN_KEY, data.access_token);
+
+        currentFarmer = await fetchJSON(
+            `${API_BASE}/me`,
+            { headers: getAuthHeaders() }
+        );
+
+        showResult(result, "Login successful!");
+        this.reset();
+        updateAuthUI();
+
+    } catch (error) {
+        sessionStorage.removeItem(TOKEN_KEY);
+        currentFarmer = null;
+        updateAuthUI();
+
+        showResult(result, escapeHTML(error.message), true);
+    } finally {
+        button.disabled = false;
+    }
+});
+
+
+// =====================================
+// LOGOUT
+// =====================================
+
+getElement("logoutButton").addEventListener("click", function() {
+    sessionStorage.removeItem(TOKEN_KEY);
+    currentFarmer = null;
+    updateAuthUI();
+
+    showResult(
+        getElement("loginResult"),
+        "You have been logged out."
+    );
+});
+
+
+// =====================================
+// PREDICTION HISTORY
+// =====================================
+
+getElement("historyButton").addEventListener("click", async function() {
+    const result = getElement("historyResult");
+
+    if (!getAccessToken()) {
+        showResult(
+            result,
+            "Please log in first to view your prediction history.",
+            true
+        );
+        return;
+    }
+
+    this.disabled = true;
+    showLoading(result, "Loading your saved prediction history...");
+
+    try {
+        const data = await fetchJSON(
+            `${API_BASE}/prediction-history?limit=20`,
+            { headers: getAuthHeaders() }
+        );
+
+        const records = Array.isArray(data.history)
+            ? data.history
+            : Array.isArray(data)
+                ? data
+                : [];
+
+        if (records.length === 0) {
+            showResult(
+                result,
+                "No crop prediction history found. Make a crop prediction first."
+            );
+            return;
+        }
+
+        let html = `<h3>Saved Predictions (${records.length})</h3>`;
+
+        records.forEach(function(record) {
+            const crop =
+                record.result?.recommended_crop ?? "Not available";
+
+            const date = record.created_at
+                ? new Date(record.created_at).toLocaleString()
+                : "Date unavailable";
+
+            html += `
+                <article class="history-item">
+                    <h4>${escapeHTML(crop)}</h4>
+                    <p><strong>Date:</strong> ${escapeHTML(date)}</p>
+                    <p><strong>Input values:</strong></p>
+                    <pre>${escapeHTML(
+                        JSON.stringify(record.input_data ?? {}, null, 2)
+                    )}</pre>
+                </article>
+            `;
+        });
+
+        showResult(result, html);
+
+    } catch (error) {
+        showResult(result, escapeHTML(error.message), true);
+    } finally {
+        this.disabled = false;
+    }
+});
+
+
+// =====================================
+// SOIL INPUTS
+// =====================================
+
+function getSoilInputs() {
+    const values = {
+        N: Number(getElement("nitrogen").value),
+        P: Number(getElement("phosphorus").value),
+        K: Number(getElement("potassium").value),
+        temperature: Number(getElement("temperature").value),
+        humidity: Number(getElement("humidity").value),
+        ph: Number(getElement("ph").value),
+        rainfall: Number(getElement("rainfall").value)
+    };
+
+    for (const [key, value] of Object.entries(values)) {
+        if (!Number.isFinite(value)) {
+            throw new Error("Please sabhi soil aur environmental fields fill karo.");
+        }
+    }
+
+    if (
+        values.N < 0 || values.N > 300 ||
+        values.P < 0 || values.P > 300 ||
+        values.K < 0 || values.K > 300
+    ) {
+        throw new Error("N, P aur K values 0 se 300 ke beech honi chahiye.");
+    }
+
+    if (values.humidity < 0 || values.humidity > 100) {
+        throw new Error("Humidity 0 se 100 ke beech honi chahiye.");
+    }
+
+    if (values.ph < 0 || values.ph > 14) {
+        throw new Error("Soil pH 0 se 14 ke beech honi chahiye.");
+    }
+
+    if (values.rainfall < 0) {
+        throw new Error("Rainfall negative nahi ho sakta.");
+    }
+
+    return values;
+}
+
+
+// =====================================
+// CROP RECOMMENDATION - REFRESH FIX
+// =====================================
+
+getElement("cropForm").addEventListener("submit", async function(event) {
+
+    // IMPORTANT: Stop browser's default form submission immediately.
+    event.preventDefault();
+
+    const form = this;
+    const result = getElement("cropResult");
+    const button = getElement("cropButton");
+
+    if (!form.reportValidity()) {
+        return;
+    }
+
+    button.disabled = true;
+
+    showLoading(
+        result,
+        "AI crop recommendations generate ho rahi hain..."
+    );
+
+    try {
+        const input = getSoilInputs();
+
+        if (!getAccessToken()) {
+            throw new Error(
+                "Crop prediction use karne ke liye pehle Farmer Login karo."
+            );
+        }
+
+        const data = await fetchJSON(`${API_BASE}/predict`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(input)
+        });
+
+        let html = `<h3>🌾 Crop Recommendation Result</h3>`;
+
+        if (data.recommended_crop) {
+            html += `
+                <p>
+                    <strong>Recommended Crop:</strong>
+                    ${escapeHTML(data.recommended_crop)}
+                </p>
+            `;
+        }
+
+        if (Array.isArray(data.top_3_crops)) {
+            html += `<h4>Top 3 Crop Recommendations</h4><ol>`;
+
+            data.top_3_crops.forEach(function(item) {
+                const name = typeof item === "string"
+                    ? item
+                    : item.crop ?? item.name ?? JSON.stringify(item);
+
+                html += `<li>${escapeHTML(name)}</li>`;
+            });
+
+            html += `</ol>`;
+        }
+
+        if (data.history_saved) {
+            html += `
+                <p>
+                    <strong>✓ Prediction saved to your history.</strong>
+                </p>
+            `;
+        }
+
+        if (!data.recommended_crop && !Array.isArray(data.top_3_crops)) {
+            html += `
+                <pre>${escapeHTML(JSON.stringify(data, null, 2))}</pre>
+            `;
+        }
+
+        showResult(result, html);
+
+    } catch (error) {
+        showResult(result, escapeHTML(error.message), true);
+    } finally {
+        button.disabled = false;
+    }
+});
+
+
+// =====================================
+// FERTILIZER GUIDANCE
+// =====================================
+
+getElement("fertilizerButton").addEventListener("click", async function() {
+    const result = getElement("fertilizerResult");
+
+    this.disabled = true;
+    showLoading(result, "Fertilizer guidance load ho rahi hai...");
+
+    try {
+        const input = getSoilInputs();
+        const crop = getElement("fertilizerCrop").value.trim();
+
+        if (!crop) {
+            throw new Error("Please crop ka naam enter karo.");
+        }
+
+        const payload = { ...input, crop: crop };
+
+        const data = await fetchJSON(`${API_BASE}/fertilizer-guidance`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        showResult(
+            result,
+            `
+                <h3>🧪 Fertilizer Guidance</h3>
+                <pre style="white-space:pre-wrap">${escapeHTML(
+                    JSON.stringify(data, null, 2)
+                )}</pre>
+            `
+        );
+
+    } catch (error) {
+        showResult(result, escapeHTML(error.message), true);
+    } finally {
+        this.disabled = false;
+    }
+});
+
+
+// =====================================
+// PLANT IMAGE PREVIEW
+// =====================================
+
+getElement("plantImage").addEventListener("change", function() {
+    const file = this.files[0];
+    const preview = getElement("imagePreview");
+
+    preview.style.display = "none";
+    preview.removeAttribute("src");
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+        showResult(
+            getElement("diseaseResult"),
+            "Please valid image select karo.",
+            true
+        );
+
+        this.value = "";
+        return;
+    }
+
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+});
+
+
+// =====================================
+// PLANT DISEASE DETECTION
+// =====================================
+
+getElement("diseaseForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const result = getElement("diseaseResult");
+    const careResult = getElement("diseaseCareResult");
+    const button = this.querySelector("button");
+    const file = getElement("plantImage").files[0];
+
+    if (!file) {
+        showResult(result, "Please plant leaf ki image select karo.", true);
+        return;
+    }
+
+    button.disabled = true;
+    careResult.classList.remove("show");
+
+    showLoading(
+        result,
+        "Plant disease AI model se check ki ja rahi hai..."
+    );
+
+    try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const data = await fetchJSON(`${API_BASE}/predict-disease`, {
+            method: "POST",
+            body: formData
+        });
+
+        const disease =
+            data.disease ??
+            data.predicted_disease ??
+            data.prediction ??
+            data.class_name ??
+            data.label;
+
+        let confidence =
+            data.confidence_percent ??
+            data.confidence ??
+            data.probability;
+
+        let confidenceText = "Not provided by API";
+
+        if (confidence !== undefined && confidence !== null) {
+            let number = Number(confidence);
+
+            if (Number.isFinite(number) && number >= 0 && number <= 1) {
+                number *= 100;
+            }
+
+            confidenceText = Number.isFinite(number)
+                ? `${number.toFixed(2)}%`
+                : String(confidence);
+        }
+
+        let html = `
+            <h3>🍃 Disease Detection Result</h3>
+            <p><strong>Prediction:</strong>
+            ${escapeHTML(disease ?? "Prediction field not found")}</p>
+            <p><strong>Confidence:</strong>
+            ${escapeHTML(confidenceText)}</p>
+        `;
+
+        if (!disease) {
+            html += `
+                <pre>${escapeHTML(JSON.stringify(data, null, 2))}</pre>
+            `;
+        }
+
+        showResult(result, html);
+
+        if (disease) {
+            await loadDiseaseCare(disease);
+        }
+
+    } catch (error) {
+        showResult(result, escapeHTML(error.message), true);
+    } finally {
+        button.disabled = false;
+    }
+});
+
+
+// =====================================
+// DISEASE CARE
+// =====================================
+
+async function loadDiseaseCare(disease) {
+    const result = getElement("diseaseCareResult");
+
+    try {
+        const data = await fetchJSON(
+            `${API_BASE}/disease-guidance/${encodeURIComponent(disease)}`
+        );
+
+        showResult(
+            result,
+            `
+                <h3>🌿 Disease Care & Prevention</h3>
+                <pre style="white-space:pre-wrap">${escapeHTML(
+                    JSON.stringify(data, null, 2)
+                )}</pre>
+            `
+        );
+
+    } catch (error) {
+        showResult(
+            result,
+            "Disease prediction mil gayi, lekin care guidance load nahi hui: " +
+            escapeHTML(error.message),
+            true
+        );
+    }
+}
+
+
+// =====================================
+// WEATHER
+// =====================================
+
+getElement("weatherForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const city = getElement("city").value.trim();
+    const status = getElement("weatherStatus");
+    const button = this.querySelector("button");
+
+    if (!city) {
+        status.textContent = "Please city ka naam enter karo.";
+        return;
+    }
+
+    button.disabled = true;
+    status.textContent = "Weather aur forecast load ho raha hai...";
+
+    getElement("currentWeather").innerHTML = "";
+    getElement("forecast").innerHTML = "";
+    getElement("farmingAdvice").innerHTML = "";
+
+    try {
+        const data = await fetchJSON(
+            `${API_BASE}/weather?city=${encodeURIComponent(city)}`
+        );
+
+        renderCurrentWeather(data);
+        renderForecast(data);
+        generateFarmingAdvice(data);
+
+        status.textContent = `Weather loaded for ${data.city ?? city}.`;
+
+    } catch (error) {
+        status.textContent = error.message;
+
+        getElement("adviceSummary").textContent =
+            "Weather data nahi mili. Farming advice generate nahi ki ja sakti.";
+
+    } finally {
+        button.disabled = false;
+    }
+});
+
+
+// =====================================
+// CURRENT WEATHER DISPLAY
+// =====================================
+
+function renderCurrentWeather(data) {
+    const items = [
+        {
+            title: "📍 Location",
+            value: `${data.city ?? "Unknown"}${data.country ? ", " + data.country : ""}`
+        },
+        {
+            title: "🌡️ Temperature",
+            value: data.temperature_c !== undefined
+                ? `${data.temperature_c} °C` : "N/A"
+        },
+        {
+            title: "🤗 Feels Like",
+            value: data.feels_like_c !== undefined
+                ? `${data.feels_like_c} °C` : "N/A"
+        },
+        {
+            title: "💧 Humidity",
+            value: data.humidity_percent !== undefined
+                ? `${data.humidity_percent}%` : "N/A"
+        },
+        {
+            title: "🌤️ Conditions",
+            value: data.weather ?? "N/A"
+        },
+        {
+            title: "💨 Wind Speed",
+            value: data.wind_speed_m_s !== undefined
+                ? `${data.wind_speed_m_s} m/s` : "N/A"
+        }
+    ];
+
+    getElement("currentWeather").innerHTML = items.map(function(item) {
+        return `
+            <div class="weather-card">
+                <h3>${escapeHTML(item.title)}</h3>
+                <div class="weather-number">${escapeHTML(item.value)}</div>
+            </div>
+        `;
+    }).join("");
+}
+
+
+// =====================================
+// WEATHER FORECAST
+// =====================================
+
+function renderForecast(data) {
+    const container = getElement("forecast");
+
+    const forecasts = Array.isArray(data.forecasts)
+        ? data.forecasts
+        : [];
+
+    getElement("forecastHeading").textContent = "📅 Upcoming Forecast";
+
+    if (forecasts.length === 0) {
+        container.innerHTML = "<p>Forecast data available nahi hai.</p>";
+        return;
+    }
+
+    container.innerHTML = forecasts.map(function(item) {
+        const date = item.datetime
+            ? new Date(item.datetime.replace(" ", "T"))
+            : null;
+
+        const dateText = date && !Number.isNaN(date.getTime())
+            ? date.toLocaleString()
+            : item.datetime ?? "Forecast time";
+
+        return `
+            <div class="forecast-card">
+                <span class="tag">Forecast</span>
+                <h3>${escapeHTML(dateText)}</h3>
+                <div class="temperature">
+                    ${escapeHTML(item.temperature_c ?? "N/A")} °C
+                </div>
+                <p>🌤️ ${escapeHTML(item.weather ?? "N/A")}</p>
+                <p>💧 Humidity: ${escapeHTML(item.humidity_percent ?? "N/A")}%</p>
+                <p>💨 Wind: ${escapeHTML(item.wind_speed_m_s ?? "N/A")} m/s</p>
+                <p>🌧️ Rain: ${escapeHTML(item.rain_mm ?? 0)} mm</p>
+            </div>
+        `;
+    }).join("");
+}
+
+
+// =====================================
+// WEATHER BASED FARMING ADVICE
+// =====================================
+
+function generateFarmingAdvice(data) {
+    const forecasts = Array.isArray(data.forecasts)
+        ? data.forecasts
+        : [];
+
+    const advice = [];
+
+    const rainForecasts = forecasts.filter(function(item) {
+        return Number(item.rain_mm) >= 2;
+    });
+
+    if (rainForecasts.length > 0) {
+        advice.push({
+            icon: "🌧️",
+            title: "Rain Alert",
+            message: "Rainfall expected hai. Irrigation schedule aur field drainage check karo."
+        });
+    } else {
+        advice.push({
+            icon: "💧",
+            title: "Irrigation Planning",
+            message: "Soil moisture aur crop stage check karke irrigation decide karo."
+        });
+    }
+
+    const windValues = forecasts
+        .map(item => Number(item.wind_speed_m_s))
+        .filter(Number.isFinite);
+
+    const currentWind = Number(data.wind_speed_m_s);
+
+    if (Number.isFinite(currentWind)) {
+        windValues.push(currentWind);
+    }
+
+    const maxWind = windValues.length ? Math.max(...windValues) : null;
+
+    if (maxWind !== null && maxWind >= 8) {
+        advice.push({
+            icon: "💨",
+            title: "High Wind Warning",
+            message: "Tez hawa mein spray drift ka risk hota hai. Unsafe conditions mein spraying postpone karo."
+        });
+    } else {
+        advice.push({
+            icon: "🌬️",
+            title: "Wind Conditions",
+            message: "Spraying se pehle actual wind speed aur product label check karo."
+        });
+    }
+
+    const temperatures = forecasts
+        .map(item => Number(item.temperature_c))
+        .filter(Number.isFinite);
+
+    const currentTemp = Number(data.temperature_c);
+
+    if (Number.isFinite(currentTemp)) {
+        temperatures.push(currentTemp);
+    }
+
+    const maxTemp = temperatures.length ? Math.max(...temperatures) : null;
+
+    if (maxTemp !== null && maxTemp >= 38) {
+        advice.push({
+            icon: "☀️",
+            title: "High Temperature Alert",
+            message: "Crop ko heat stress ke liye monitor karo aur soil moisture check karo."
+        });
+    } else {
+        advice.push({
+            icon: "🌡️",
+            title: "Temperature Monitoring",
+            message: "Crop ki growth aur local temperature conditions monitor karte raho."
+        });
+    }
+
+    const humidityValues = forecasts
+        .map(item => Number(item.humidity_percent))
+        .filter(Number.isFinite);
+
+    if (humidityValues.length > 0) {
+        const maxHumidity = Math.max(...humidityValues);
+
+        if (maxHumidity >= 85) {
+            advice.push({
+                icon: "🍃",
+                title: "High Humidity Alert",
+                message: "Leaves par fungal disease ke symptoms check karo aur field drainage monitor karo."
+            });
+        } else {
+            advice.push({
+                icon: "🌱",
+                title: "Crop Monitoring",
+                message: "Leaves aur crop health ko regularly monitor karte raho."
+            });
+        }
+    }
+
+    getElement("farmingAdvice").innerHTML = advice.map(function(item) {
+        return `
+            <div class="advice-card">
+                <h3>${escapeHTML(item.icon)} ${escapeHTML(item.title)}</h3>
+                <p>${escapeHTML(item.message)}</p>
+            </div>
+        `;
+    }).join("");
+
+    getElement("adviceSummary").textContent =
+        `Weather analysis complete. Generated ${advice.length} farming advice cards for ${data.city ?? "your city"}.`;
+}
+
+
+// =====================================
+// INITIALIZE
+// =====================================
+
+loadCurrentFarmer();
+
+</script>
+
+</body>
+</html>
+```
